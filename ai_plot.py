@@ -1,7 +1,29 @@
 import matplotlib.pyplot as plt
 from IPython import display
+import os
 
 plt.ion()
+
+def save_scores(scores, filename="history.txt"):
+    with open(filename, "w") as file:
+        for score in scores:
+            file.write(f"{score}\n")
+    print(f"History file | Save Successed to {filename}")
+
+def load_scores(scores_extend, filename="history.txt"):
+    if not os.path.exists(filename):  
+        print(f"History file | {filename} does not exist. Starting with an empty history")
+        return scores_extend
+    
+    with open(filename, "r") as file:
+        scores_base = [float(line.strip()) for line in file]  
+    
+    if len(scores_base) <= 0:
+        return scores_extend
+    
+    scores_base.extend(scores_extend)
+    return scores_base
+
 
 def mean_cal(scores):
     mean_scores, index, total_scores = [], 1, 0
@@ -11,15 +33,6 @@ def mean_cal(scores):
         index += 1
 
     return mean_scores
-def save_plot_data(scores1, scores2, filename="C:/Users/khanh/Desktop/plot_data.txt"):
-    """ Lưu thông tin đồ thị vào file text """
-    mean_scores1 = mean_cal(scores1)
-    mean_scores2 = mean_cal(scores2)
-
-    with open(filename, "w") as f:
-        f.write("Game_Number, Score1, Mean_Score1, Score2, Mean_Score2\n")
-        for i in range(len(scores1)):
-            f.write(f"{i+1}, {scores1[i]:.2f}, {mean_scores1[i]:.2f}, {scores2[i]:.2f}, {mean_scores2[i]:.2f}\n")
 
 def plot_scores(scores1, scores2):
     display.clear_output(wait=True)
@@ -29,6 +42,8 @@ def plot_scores(scores1, scores2):
     plt.xlabel('Number of Games')
     plt.ylabel('Score')
 
+    scores1 = load_scores(scores1, filename="history1.txt")
+    scores2 = load_scores(scores2, filename="history2.txt")
     mean_scores1 = mean_cal(scores1)
     mean_scores2 = mean_cal(scores2)
     
@@ -48,4 +63,8 @@ def plot_scores(scores1, scores2):
 
     plt.show(block=False)
     plt.pause(.1/60)
-    save_plot_data(scores1, scores2)
+
+
+    # Save history
+    save_scores(scores1, filename="history1.txt")
+    save_scores(scores2, filename="history2.txt")

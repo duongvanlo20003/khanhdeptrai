@@ -13,6 +13,9 @@ WIDTH, HEIGHT = 800, 600
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Gun Mayhem Clone")
 
+# Font
+font = pygame.font.SysFont('Arial', 24)
+
 # Màu sắc
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
@@ -98,22 +101,45 @@ class Bullet(pygame.sprite.Sprite):
                 self.owner.hit_opponent = True
                 player.got_hit = True
                 self.kill()
+
+class StepDisplay:
+    def __init__(self, max_step, font, screen_width, screen_height):
+        self.max_step = max_step  
+        self.font = font          
+        self.step = 0            
+
+        self.bar_width = int(screen_width/3)                       
+        self.bar_height = int(screen_height/20)                         
+        self.bar_x = int((screen_width - self.bar_width) / 2)  
+        self.bar_y = 10                              
+
+        # Vị trí văn bản (dưới thanh loading 5 pixel)
+        self.text_y = self.bar_y + self.bar_height + 5
+
+    def update(self, current_step):
+        self.step = current_step
+
+    def draw(self, screen):
+        pygame.draw.rect(screen, (100, 100, 100), (self.bar_x, self.bar_y, self.bar_width, self.bar_height))
+
+        fill_width = (self.step / self.max_step) * self.bar_width  
+        pygame.draw.rect(screen, (0, 255, 0), (self.bar_x, self.bar_y, fill_width, self.bar_height))
+
+        step_text = self.font.render(f"Step: {self.step}/{self.max_step}", True, (255, 255, 255))
+        text_width, _ = step_text.get_size()
+        text_x = (screen.get_width() - text_width) / 2  
+        screen.blit(step_text, (text_x, self.text_y))
+
+
+
 # Function to save the Q-table
 def save_q_table(ai, filename):
     with open(filename, 'wb') as f:
         pickle.dump(ai.q_table, f)
+        print(f"Q-table file | Save Successed to {filename}")
 
-# Function to load the Q-table
-def load_q_table(ai, filename):
-    try:
-        if os.path.exists(filename):
-            with open(filename, 'rb') as f:
-                ai.q_table = pickle.load(f)
-            print(f"Successfully loaded Q-table from {filename}")
-        else:
-            print(f"Q-table file {filename} does not exist. Starting with an empty Q-table.")
-    except (EOFError, pickle.UnpicklingError) as e:
-        print(f"Error loading Q-table from {filename}: {e}. Starting with an empty Q-table.")
+    
+
 # Q-learning AI
 class QLearningAI:
     def __init__(self, actions, learning_rate=0.1, discount_factor=0.9, epsilon=0.1):
@@ -143,7 +169,17 @@ class QLearningAI:
         q_values[action_index] += self.learning_rate * (target - q_values[action_index])
 
     def load_q_table(self, filename):
-        load_q_table(self, filename)
+        try:
+            if os.path.exists(filename):
+                with open(filename, 'rb') as f:
+                    self.q_table = pickle.load(f)
+                print(f"Successfully loaded Q-table from {filename}")
+            else:
+                self.q_table = {}
+                print(f"Q-table file | {filename} does not exist. Starting with an empty Q-table.")
+
+        except (EOFError, pickle.UnpicklingError) as e:
+            print(f"Error loading Q-table from {filename}: {e}. Starting with an empty Q-table.")
 
 
 # AI Bot
@@ -208,6 +244,9 @@ platforms.add(Platform(50, 550, 700, 20))
 platforms.add(Platform(250, 250, 150, 20))
 platforms.add(Platform(450, 250, 150, 20))
 
+
+
+
 # Reset game
 def reset_game():
     global players, bullets
@@ -215,6 +254,8 @@ def reset_game():
     bullets.empty()
     player1 = AIBot(300, 100, WHITE)
     player2 = AIBot(500, 100, GREEN)
+    player1.ai.load_q_table("q_table_player1.pkl")
+    player2.ai.load_q_table("q_table_player2.pkl")
     players.add(player1, player2)
     return player1, player2
 
@@ -222,10 +263,9 @@ def reset_game():
 scores_agent1 = []
 scores_agent2 = []
 
-num_games = 1
-
 max_step = 500
 
+step_display = StepDisplay(max_step, font, WIDTH, HEIGHT)
 
 # Chạy trò chơi
 running = True
@@ -297,7 +337,8 @@ while running:
             reward2 -= 50  # Small penalty for timeout
 
         reward1 -= 0.01
-        reward2 -= 0.02
+        reward2 -= 0.01
+
         # Update reward his for plot
         total_reward1 += reward1
         total_reward2 += reward2
@@ -314,11 +355,14 @@ while running:
         step +=1
 
         # Render
-        print(step)
+        step_display.update(step)
         screen.fill(BLACK)
+
+        step_display.draw(screen)  
         players.draw(screen)
         bullets.draw(screen)
         platforms.draw(screen)
+
         pygame.display.flip()
         clock.tick(FPS)
 
@@ -326,9 +370,9 @@ while running:
     # Update reward history for plot
     scores_agent1.append(total_reward1)
     scores_agent2.append(total_reward2)
-    num_games +=1
     plot_scores(scores_agent1, scores_agent2)
     save_q_table(player1.ai, 'q_table_player1.pkl')
     save_q_table(player2.ai, 'q_table_player2.pkl')
-    
+    print(f"Current Run: {len(scores_agent1)} \n")
+
 pygame.quit()
