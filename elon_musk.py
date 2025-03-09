@@ -369,6 +369,7 @@ while running:
     scores_agent1.append(total_reward1)
     scores_agent2.append(total_reward2)
     plot_scores(scores_agent1, scores_agent2)
+    
     save_q_table(player1.ai, 'q_table_player1.pkl')
     save_q_table(player2.ai, 'q_table_player2.pkl')
     print(f"Current Game: {len(scores_agent1)} \n")
