@@ -1,7 +1,7 @@
 import pygame
 import random
 import numpy as np
-from ai_plot import plot_scores
+from ai_plot import plot_scores, load_scores
 import pickle
 import os
 
@@ -173,7 +173,7 @@ class QLearningAI:
             if os.path.exists(filename):
                 with open(filename, 'rb') as f:
                     self.q_table = pickle.load(f)
-                print(f"Successfully loaded Q-table from {filename}")
+                print(f"Q-table file | Successfully loaded Q-table from {filename}")
             else:
                 self.q_table = {}
                 print(f"Q-table file | {filename} does not exist. Starting with an empty Q-table.")
@@ -245,8 +245,6 @@ platforms.add(Platform(250, 250, 150, 20))
 platforms.add(Platform(450, 250, 150, 20))
 
 
-
-
 # Reset game
 def reset_game():
     global players, bullets
@@ -260,8 +258,8 @@ def reset_game():
     return player1, player2
 
 
-scores_agent1 = []
-scores_agent2 = []
+scores_agent1 = load_scores(filename="history1.txt")
+scores_agent2 = load_scores(filename="history2.txt")
 
 max_step = 500
 
@@ -373,6 +371,6 @@ while running:
     plot_scores(scores_agent1, scores_agent2)
     save_q_table(player1.ai, 'q_table_player1.pkl')
     save_q_table(player2.ai, 'q_table_player2.pkl')
-    print(f"Current Run: {len(scores_agent1)} \n")
+    print(f"Current Game: {len(scores_agent1)} \n")
 
 pygame.quit()

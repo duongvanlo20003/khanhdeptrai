@@ -10,18 +10,13 @@ def save_scores(scores, filename="history.txt"):
             file.write(f"{score}\n")
     print(f"History file | Save Successed to {filename}")
 
-def load_scores(scores_extend, filename="history.txt"):
+def load_scores(filename="history.txt"):
     if not os.path.exists(filename):  
         print(f"History file | {filename} does not exist. Starting with an empty history")
-        return scores_extend
-    
+        return []
     with open(filename, "r") as file:
         scores_base = [float(line.strip()) for line in file]  
-    
-    if len(scores_base) <= 0:
-        return scores_extend
-    
-    scores_base.extend(scores_extend)
+    print(f"History file | {filename} Load Successed")
     return scores_base
 
 
@@ -34,6 +29,7 @@ def mean_cal(scores):
 
     return mean_scores
 
+
 def plot_scores(scores1, scores2):
     display.clear_output(wait=True)
     display.display(plt.gcf())
@@ -42,8 +38,6 @@ def plot_scores(scores1, scores2):
     plt.xlabel('Number of Games')
     plt.ylabel('Score')
 
-    scores1 = load_scores(scores1, filename="history1.txt")
-    scores2 = load_scores(scores2, filename="history2.txt")
     mean_scores1 = mean_cal(scores1)
     mean_scores2 = mean_cal(scores2)
     
